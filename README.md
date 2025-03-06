@@ -1,33 +1,69 @@
 # CV Analyzer
 
-CV Analyzer is a web application that helps users improve their resumes/CVs for job applications. The application uses AI to analyze CVs and provide feedback on strengths, weaknesses, and areas for improvement.
+CV Analyzer is a web application that helps users improve their resumes/CVs for job applications. The application uses AI (Mistral AI) to analyze CVs and provide structured feedback on strengths, weaknesses, and areas for improvement.
 
 ## Features
 
-- Upload and analyze PDF resumes
+- Upload and analyze PDF, DOCX, and TXT resumes
 - Receive AI-powered analysis with specific feedback
 - View ATS compatibility score
 - Get recommendations for improvement
+- Support for both English and Turkish languages
+
+## Current Project Status
+
+**Version**: 0.1.0  
+**Last Updated**: April 2023
+
+The application consists of:
+- A Next.js frontend with React & TypeScript
+- A Flask backend API server
+- Integration with Mistral AI for CV analysis
+- Transparent error handling between frontend and backend
+
+### Recent Updates
+
+We've recently improved the application's error handling to provide a more honest user experience:
+
+- Removed mock data generation when backend API fails
+- Added clear error messages to inform users when services are unavailable
+- Implemented proper error state management in the frontend UI
+- Enhanced the user experience with transparent error feedback
 
 ## Tech Stack
 
-- **Frontend**: Next.js, React, Tailwind CSS
-- **Backend**: Flask (Python)
-- **AI**: Google Gemini API
+### Frontend
+- **Framework**: Next.js 14
+- **Language**: TypeScript
+- **UI Framework**: React 18
+- **Styling**: Tailwind CSS
+- **State Management**: React Context
+
+### Backend
+- **Server**: Flask 2.3.3
+- **Language**: Python 3.10+
+- **PDF Processing**: pdfplumber 0.10.3
+- **DOCX Processing**: python-docx 1.0.1
+- **Environment**: python-dotenv 1.0.0
+
+### AI Integration
+- **AI Provider**: Mistral AI
+- **API Access**: Via Mistral API key
+- **Analysis Format**: Structured JSON response
 
 ## Prerequisites
 
 - Python 3.8 or higher
 - Node.js 18 or higher
 - npm or yarn
-- Google Gemini API key
+- Mistral AI API key
 
 ## Installation
 
 1. Clone the repository:
    ```
    git clone <repository-url>
-   cd cv-analyzer-project
+   cd cv-analyzer
    ```
 
 2. Set up the frontend:
@@ -42,9 +78,9 @@ CV Analyzer is a web application that helps users improve their resumes/CVs for 
    pip install -r requirements.txt
    ```
 
-4. Create a `.env` file in the root directory with your Google Gemini API key:
+4. Create a `.env` file in the root directory with your Mistral AI API key:
    ```
-   GOOGLE_API_KEY=your_gemini_api_key_here
+   MISTRAL_API_KEY=your_api_key_here
    ```
 
 ## Running the Application
@@ -75,14 +111,66 @@ npm run dev
 ## Usage
 
 1. Open http://localhost:3000 in your browser
-2. Upload your CV (PDF format)
-3. Wait for the analysis to complete
-4. View your results and recommendations
+2. Select your preferred language (English or Turkish)
+3. Upload your CV (PDF, DOCX, or TXT format)
+4. Wait for the analysis to complete
+5. View your results and recommendations
+
+## Application Architecture
+
+### Frontend Structure
+
+```
+cv-analyzer/
+├── app/
+│   ├── api/
+│   │   └── upload/
+│   │       └── route.ts    # API endpoint for file upload
+│   │   └── results/
+│   │       └── page.tsx        # Results display page
+│   ├── components/
+│   │   ├── animated-text.tsx   # Text animation component
+│   │   ├── file-uploader.tsx   # File upload component
+│   │   ├── language-context.tsx # Language state management
+│   │   ├── language-selector.tsx # Language selector UI
+│   │   └── nav-links.tsx       # Navigation menu
+│   └── [various config files]
+```
+
+### Backend Structure
+
+```
+/
+├── backend.py              # Main Flask application
+├── check_backend.py        # Utility to check backend status
+├── run.py                  # Script to run both frontend & backend
+└── requirements.txt        # Python dependencies
+```
+
+### Information Flow
+
+1. User uploads a file through the frontend
+2. File is sent to Next.js API route `/api/upload`
+3. API forwards the file to Flask backend at `http://localhost:5000/analyze`
+4. Backend extracts text from the document
+5. Text is sent to Mistral AI for analysis
+6. Analysis results are returned to the frontend
+7. Frontend displays formatted results to the user
+
+## Error Handling
+
+The application implements comprehensive error handling:
+
+- **File Validation**: Validates file types and sizes before upload
+- **Backend Connection**: Detects and reports backend availability issues
+- **API Timeouts**: Handles long-running requests with appropriate timeouts
+- **User Feedback**: Provides clear error messages when services are unavailable
 
 ## Troubleshooting
 
-### "Failed to fetch" Error
-If you encounter a "Failed to fetch" error when uploading your resume, it usually means that the frontend can't connect to the backend server. Here's how to fix it:
+### "Failed to connect to analysis service" Error
+
+This error occurs when the frontend cannot connect to the backend server. Here's how to fix it:
 
 1. **Check if the backend is running**: 
    ```
@@ -95,12 +183,9 @@ If you encounter a "Failed to fetch" error when uploading your resume, it usuall
    - The frontend should be running on http://localhost:3000
    - Use `python run.py` to start both servers simultaneously
 
-3. **Check your file format**:
-   - Make sure you're uploading a PDF file
-   - Other formats (DOCX, TXT) may have limited support
-
-4. **Check browser console for more details**:
-   - Open your browser's developer tools (F12) and check the console for specific error messages
+3. **Check your API key**:
+   - Ensure your `.env` file contains a valid Mistral API key
+   - Check that the API key has sufficient permissions and quota
 
 ### Other Issues
 
@@ -112,28 +197,32 @@ If you're experiencing other issues:
    cd cv-analyzer && npm install
    ```
 
-2. Check that your `.env` file contains a valid Google Gemini API key
+2. Check browser console for specific JavaScript errors
 
-3. Try restarting both the frontend and backend servers:
-   ```
-   python run.py
-   ```
+3. Look at the Flask server logs for backend errors
 
-## Project Structure
-
-- `/cv-analyzer` - Next.js frontend application
-  - `/app` - Next.js pages and components
-  - `/components` - React components
-- `backend.py` - Flask API server
-- `run.py` - Script to run both frontend and backend
-- `check_backend.py` - Utility script to check if the backend is running
+4. Try restarting both the frontend and backend servers
 
 ## API Endpoints
 
-- `GET /` - API status check
-- `POST /upload` - Upload and analyze CV file
+### Backend (Flask) Endpoints
+
+- `GET /` - Health check endpoint
+- `POST /analyze` - Upload and analyze CV file
+
+### Frontend (Next.js) API Routes
+
+- `POST /api/upload` - Proxy endpoint that forwards to backend
+
+## Contributing
+
+Contributions are welcome! Some areas for improvement:
+
+1. **Enhanced Analysis**: Improve the AI prompts for better CV feedback
+2. **User Accounts**: Add authentication and persistent storage
+3. **More File Formats**: Better support for various document types
+4. **Industry-Specific Analysis**: Tailored feedback for different fields
 
 ## License
 
-MIT "# cv-analyzer" 
-"# cv-analyzer" 
+MIT License

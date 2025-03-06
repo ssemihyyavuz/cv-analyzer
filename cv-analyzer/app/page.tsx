@@ -43,7 +43,7 @@ export default function Home() {
             <p className="text-gray-600 max-w-2xl mx-auto mb-8">
               {language === 'en' 
                 ? 'Upload your CV to get instant feedback, ATS compatibility score, and actionable recommendations to stand out to recruiters.'
-                : 'CV\'nizi yükleyerek anında geri bildirim, ATS uyumluluk puanı ve işe alım uzmanlarına öne çıkmanızı sağlayacak uygulanabilir öneriler alın.'}
+                : 'CV\'nizi yükleyerek anında geri bildirim, ATS uyumluluk puanı ve işe alım uzmanlarının gözünde öne çıkmanızı sağlayacak uygulanabilir öneriler alın.'}
             </p>
             <button className="inline-flex items-center gap-2 bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors">
               {language === 'en' ? 'Get Started' : 'Başlayın'}

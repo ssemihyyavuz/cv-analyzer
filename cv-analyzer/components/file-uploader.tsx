@@ -10,6 +10,7 @@ export function FileUploader() {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [aiLanguage, setAiLanguage] = useState<string>("en") // Default AI analysis language
   
   const { language, translations } = useLanguage()
@@ -41,6 +42,7 @@ export function FileUploader() {
     setFile(file)
     setUploading(true)
     setFileError(null)
+    setUploadError(null)
     setUploadProgress(0)
     setUploadSuccess(false)
     
@@ -73,134 +75,49 @@ export function FileUploader() {
         clearTimeout(timeoutId);
         clearInterval(progressInterval);
         
+        const data = await response.json();
+        
         if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`)
+          throw new Error(data.error || `Error ${response.status}: ${response.statusText}`)
         }
         
         // Handle success
         setUploadProgress(100)
         setUploadSuccess(true)
         
-        // Get the response data
-        const data = await response.json()
         console.log('Upload successful:', data)
-        
-        // Create an object that has proper structure for analysis
-        const resultData = {
-          analysis: data?.analysis || createMockAnalysis(aiLanguage)
-        }
         
         // Store the analysis result in localStorage
         try {
-          localStorage.setItem('cvAnalysisResult', JSON.stringify(resultData))
-          console.log('Saved to localStorage:', resultData)
+          localStorage.setItem('cvAnalysisResult', JSON.stringify(data))
+          console.log('Saved to localStorage:', data)
         } catch (e) {
           console.error('Error saving to localStorage:', e)
         }
         
-        // Wait a moment before redirecting to results page
-        setTimeout(() => {
-          router.push('/results')
-        }, 1000)
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId);
-        clearInterval(progressInterval);
+        // Redirect to results page
+        router.push('/results')
+      } catch (e) {
+        clearInterval(progressInterval)
+        setUploading(false)
+        setUploadProgress(0)
         
-        if (fetchError.name === 'AbortError') {
-          console.error('Request timed out');
-          setFileError(language === 'en' 
-            ? 'Request timed out. Please try again later.' 
-            : 'İstek zaman aşımına uğradı. Lütfen daha sonra tekrar deneyin.');
-        } else {
-          throw fetchError; // Rethrow to be caught by the outer catch
-        }
+        // Display the error message to the user
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during upload'
+        setUploadError(errorMessage)
+        console.error('Upload failed:', errorMessage)
       }
-    } catch (error) {
-      console.error('Upload error:', error)
-      
-      // Check if it's a network/connection error
-      if (error instanceof Error) {
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          setFileError(translations.connectionError[language])
-        } else {
-          setFileError(translations.uploadError[language])
-        }
-      } else {
-        setFileError(translations.uploadError[language])
-      }
-      
+    } catch (e) {
       setUploading(false)
       setUploadProgress(0)
       
-      // Even if we have an error, let's create a mock analysis so the user can see results
-      try {
-        const mockData = {
-          analysis: createMockAnalysis(aiLanguage)
-        };
-        localStorage.setItem('cvAnalysisResult', JSON.stringify(mockData));
-        
-        // After a delay, redirect to results with mock data
-        setTimeout(() => {
-          setUploadSuccess(true);
-          setTimeout(() => {
-            router.push('/results');
-          }, 1000);
-        }, 2000);
-      } catch (e) {
-        console.error('Failed to save mock data:', e);
-      }
+      const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred'
+      setUploadError(errorMessage)
+      console.error('Upload exception:', errorMessage)
     }
   }
 
-  // Create mock analysis data in case the backend fails to provide it
-  const createMockAnalysis = (lang: string) => {
-    const atsScore = Math.floor(Math.random() * 30) + 65; // Random score between 65-95
-    
-    if (lang === 'en') {
-      return {
-        overall_impression: "Your CV has been analyzed. We found both strengths and areas for improvement.",
-        ats_score: atsScore,
-        strengths: [
-          "Clear presentation of work history",
-          "Good use of action verbs",
-          "Skills section is well-organized"
-        ],
-        areas_for_improvement: [
-          "Add more quantifiable achievements",
-          "Improve keyword density for your industry",
-          "Consider a more focused professional summary"
-        ],
-        recommendations: [
-          "Include metrics and specific outcomes from your work",
-          "Tailor your CV more specifically to each job application",
-          "Add relevant industry keywords throughout your CV"
-        ],
-        keyword_suggestions: ["leadership", "project management", "communication", "problem-solving"]
-      }
-    } else {
-      return {
-        overall_impression: "CV'niz analiz edildi. Hem güçlü yönler hem de iyileştirme alanları bulduk.",
-        ats_score: atsScore,
-        strengths: [
-          "İş geçmişinin net sunumu",
-          "Eylem fiillerinin iyi kullanımı",
-          "Beceriler bölümü iyi düzenlenmiş"
-        ],
-        areas_for_improvement: [
-          "Daha fazla ölçülebilir başarı ekleyin",
-          "Sektörünüz için anahtar kelime yoğunluğunu artırın",
-          "Daha odaklı bir profesyonel özet düşünün"
-        ],
-        recommendations: [
-          "İşinizden metrikler ve belirli sonuçlar dahil edin",
-          "CV'nizi her iş başvurusuna daha spesifik olarak uyarlayın",
-          "CV'niz boyunca ilgili sektör anahtar kelimelerini ekleyin"
-        ],
-        keyword_suggestions: ["liderlik", "proje yönetimi", "iletişim", "problem çözme"]
-      }
-    }
-  }
-
+  // Handle file drop functionality
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
@@ -222,7 +139,7 @@ export function FileUploader() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-md mx-auto">
       {/* Language selection for AI analysis */}
       <div className="mb-4">
         <p className="text-sm font-medium text-gray-700 mb-2">{translations.selectLanguage[language]}</p>
@@ -334,6 +251,18 @@ export function FileUploader() {
       {fileError && (
         <div className="mt-2 text-red-500 text-sm">
           {fileError}
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <p className="font-medium">Analysis Error:</p>
+          <p>{uploadError}</p>
+          <p className="mt-2 text-sm">
+            {language === 'en' 
+              ? 'Please ensure the backend server is running and try again.'
+              : 'Lütfen arka uç sunucusunun çalıştığından emin olun ve tekrar deneyin.'}
+          </p>
         </div>
       )}
     </div>
