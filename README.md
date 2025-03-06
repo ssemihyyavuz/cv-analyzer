@@ -197,7 +197,11 @@ If you're experiencing other issues:
    cd cv-analyzer && npm install
    ```
 
+<<<<<<< HEAD
 2. Check browser console for specific JavaScript errors
+=======
+2. Check that your `.env` file contains a valid MISTRAL API key
+>>>>>>> 4ef7d7436d7316d830c7df1e011044ba11d6264f
 
 3. Look at the Flask server logs for backend errors
 
