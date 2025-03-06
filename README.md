@@ -112,7 +112,7 @@ If you're experiencing other issues:
    cd cv-analyzer && npm install
    ```
 
-2. Check that your `.env` file contains a valid Google Gemini API key
+2. Check that your `.env` file contains a valid MISTRAL API key
 
 3. Try restarting both the frontend and backend servers:
    ```
