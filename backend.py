@@ -8,6 +8,9 @@ import pdfplumber  # Using pdfplumber instead of PyPDF2
 import traceback
 import requests
 import json
+import base64
+# Use explicit import from python-docx package
+import docx
 
 load_dotenv()
 
@@ -47,161 +50,206 @@ def analyze_cv():
         if file_ext not in ['.pdf', '.docx', '.txt']:
             return jsonify({'error': f'Unsupported file format: {file_ext}. Only PDF, DOCX, and TXT files are allowed.'}), 400
         
-        # Handle different file types
-        if file_ext == '.pdf':
-            # Save uploaded file temporarily
-            temp_path = 'temp_resume.pdf'
-            file.save(temp_path)
-            
-            try:
-                # Extract text from PDF using pdfplumber
-                pdf_text = ""
-                with pdfplumber.open(temp_path) as pdf:
-                    for page in pdf.pages:
-                        extracted_text = page.extract_text()
-                        if extracted_text:
-                            pdf_text += extracted_text + "\n\n"
-                
-                # Clean up temp file
-                os.remove(temp_path)
-                
-                # If text extraction successful
-                if pdf_text.strip():
-                    return analyze_cv_text(pdf_text, analysis_language)
-                else:
-                    return jsonify({'error': 'Could not extract text from the PDF. The file may be scanned or protected.'}), 400
-                    
-            except Exception as e:
-                # Clean up temp file if it exists
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
-                raise e
+        # Read the file content
+        file_content = file.read()
         
+        # STEP 1: Extract text using OCR for PDFs and images
+        # For non-PDF files, we'll use regular text extraction
+        if file_ext == '.pdf':
+            try:
+                # First try with Mistral OCR for better results
+                cv_text = extract_text_with_ocr(file_content)
+            except Exception as e:
+                print(f"OCR extraction failed, falling back to pdfplumber: {str(e)}")
+                # Fallback to pdfplumber if OCR fails
+                cv_text = extract_text_from_pdf(file_content)
         elif file_ext == '.docx':
-            # For DOCX files, we'd typically use a library like python-docx
-            # For now, just return an error message
-            return jsonify({'error': 'DOCX support is coming soon. Please upload a PDF file.'}), 400
+            cv_text = extract_text_from_docx(file_content)
+        else:  # .txt
+            cv_text = file_content.decode('utf-8')
             
-        elif file_ext == '.txt':
-            # For TXT files, simply read the content
-            text_content = file.read().decode('utf-8')
-            if text_content.strip():
-                return analyze_cv_text(text_content, analysis_language)
-            else:
-                return jsonify({'error': 'The TXT file is empty.'}), 400
-    
+        # STEP 2: Analyze the extracted text
+        analysis_result = analyze_cv_text(cv_text, analysis_language)
+        
+        return jsonify(analysis_result)
+        
     except Exception as e:
-        print("Error processing file:", str(e))
+        print("Error processing CV:", str(e))
         traceback.print_exc()
-        return jsonify({'error': f'Error processing file: {str(e)}'}), 500
+        return jsonify({'error': str(e)}), 500
+
+def extract_text_with_ocr(file_content):
+    """Extract text from document using Mistral OCR API"""
+    print("Using Mistral OCR API for text extraction...")
+    
+    api_url = "https://api.mistral.ai/v1/ocr"
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {MISTRAL_API_KEY}"
+    }
+    
+    # Convert file content to base64
+    file_base64 = base64.b64encode(file_content).decode('utf-8')
+    
+    payload = {
+        "model": "mistral-ocr-latest",
+        "document": {
+            "type": "base64",
+            "base64": file_base64
+        }
+    }
+    
+    response = requests.post(api_url, headers=headers, json=payload)
+    
+    if response.status_code != 200:
+        raise Exception(f"OCR Error: {response.status_code} - {response.text}")
+    
+    # Extract and return the OCR text
+    result = response.json()
+    
+    # The OCR API returns structured document content
+    # We'll concatenate all the text from all pages
+    extracted_text = ""
+    
+    # Extract text based on the OCR API response format
+    # This may need adjustment based on the actual response structure
+    if "pages" in result:
+        for page in result["pages"]:
+            if "content" in page:
+                extracted_text += page["content"] + "\n\n"
+            elif "text" in page:
+                extracted_text += page["text"] + "\n\n"
+    elif "text" in result:
+        extracted_text = result["text"]
+    
+    return extracted_text
+
+def extract_text_from_pdf(file_content):
+    """Extract text from PDF using pdfplumber (fallback method)"""
+    print("Using pdfplumber for PDF text extraction...")
+    text = ""
+    with pdfplumber.open(io.BytesIO(file_content)) as pdf:
+        for page in pdf.pages:
+            text += page.extract_text() or ""
+            text += "\n\n"  # Add spacing between pages
+    return text
+
+def extract_text_from_docx(file_content):
+    """Extract text from DOCX file"""
+    print("Extracting text from DOCX...")
+    doc = docx.Document(io.BytesIO(file_content))
+    text = ""
+    for para in doc.paragraphs:
+        text += para.text + "\n"
+    return text
 
 def analyze_cv_text(cv_text, language='en'):
-    """Analyze the CV text using Mistral AI"""
+    """Analyze CV text using Mistral AI models"""
+    print(f"Analyzing CV text in {language} language...")
+    
+    # Construct the prompt based on the selected language
+    if language == 'tr':
+        prompt = f"""
+        Bu bir özgeçmişi analiz etmen için bir istektir. Bu CV'yi değerlendir ve aşağıdaki yapılandırılmış biçimde bir analiz sağla:
+        
+        1. Genel İzlenim: CV'nin genel kalitesi hakkında 2-3 cümlelik bir özet değerlendirme.
+        
+        2. ATS Uyumluluğu Puanı: CV'nin bir Başvuru Takip Sisteminden (ATS) ne kadar iyi geçeceğinin 1-100 arası bir sayısal değerlendirmesi. Daha yüksek puan daha iyidir.
+        
+        3. Güçlü Yönler: CV'nin 3-5 önemli güçlü yönü - adayın iyi yaptığı şeyler.
+        
+        4. İyileştirme Alanları: CV'nin 3-5 iyileştirme alanı - adayın geliştirmesi gereken şeyler.
+        
+        5. Öneriler: CV'yi geliştirmek için 3-5 somut, uygulanabilir öneri.
+        
+        6. Anahtar Kelime Önerileri: Adayın dahil etmeyi düşünmesi gereken 5-10 ilgili anahtar kelime öner.
+        
+        Yanıtını şu anahtarlarla yapılandırılmış JSON formatında ver: overall_impression, ats_score (sayısal), strengths (dizi), areas_for_improvement (dizi), recommendations (dizi) ve keyword_suggestions (dizi).
+        
+        İşte CV metni:
+        
+        {cv_text}
+        """
+    else:  # Default to English
+        prompt = f"""
+        This is a request to analyze a resume/CV. Please evaluate this CV and provide an analysis in the following structured format:
+        
+        1. Overall Impression: A 2-3 sentence summary evaluation of the overall quality of the CV.
+        
+        2. ATS Compatibility Score: A numerical assessment on a scale of 1-100 of how well the CV would pass through an Applicant Tracking System (ATS). Higher is better.
+        
+        3. Strengths: 3-5 key strengths of the CV - things the candidate is doing well.
+        
+        4. Areas for Improvement: 3-5 areas where the CV could be improved - things the candidate should work on.
+        
+        5. Recommendations: 3-5 concrete, actionable recommendations to improve the CV.
+        
+        6. Keyword Suggestions: Suggest 5-10 relevant keywords that the candidate might consider including.
+        
+        Provide your response in structured JSON format with the keys: overall_impression, ats_score (numerical), strengths (array), areas_for_improvement (array), recommendations (array), and keyword_suggestions (array).
+        
+        Here is the CV text:
+        
+        {cv_text}
+        """
+    
+    # Send text to Mistral AI for analysis using the chat completions API
+    api_url = "https://api.mistral.ai/v1/chat/completions"
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {MISTRAL_API_KEY}"
+    }
+    
+    payload = {
+        "model": "mistral-large-latest",  # Using the chat model for analysis
+        "messages": [
+            {"role": "system", "content": "You are a professional CV analysis assistant that specializes in parsing and analyzing resumes. You provide structured, helpful feedback on how to improve CVs."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.3,  # Lower temperature for more consistent results
+        "response_format": {"type": "json_object"}  # Ensure JSON response format
+    }
+    
+    response = requests.post(api_url, headers=headers, json=payload)
+    
+    if response.status_code != 200:
+        print(f"Mistral API Error: {response.status_code}")
+        print(response.text)
+        return jsonify({'error': f'Error from Mistral API: {response.text}'}), 500
+    
+    # Parse the response
+    result = response.json()
+    
+    # Extract the content from the response
+    analysis_content = result['choices'][0]['message']['content']
+    
     try:
-        # Determine the language for the analysis
-        is_english = language == 'en'
-        
-        # Create prompt for analysis based on the language
-        if is_english:
-            prompt = f"""
-            You are a professional CV/resume analyzer. I will provide you with the text extracted from a resume, and you need to analyze it professionally and provide detailed feedback.
-            
-            Please analyze the resume and provide the following sections:
-            
-            1. Overall Impression: A brief summary of the CV's strengths and weaknesses.
-            2. ATS Score: Evaluate the resume's compatibility with Applicant Tracking Systems on a scale of 0-100.
-            3. Strengths: List 3-5 positive aspects of the resume.
-            4. Areas for Improvement: List 3-5 aspects that could be improved.
-            5. Recommendations: Provide 3-5 specific, actionable recommendations to improve the resume.
-            6. Keyword Suggestions: Suggest 5-10 relevant keywords that the candidate should consider including.
-            
-            Format your response as structured JSON with the following keys: overall_impression, ats_score (numeric), strengths (array), areas_for_improvement (array), recommendations (array), and keyword_suggestions (array).
-            
-            Here is the resume text:
-            
-            {cv_text}
-            """
-        else:
-            prompt = f"""
-            Sen profesyonel bir CV analiz uzmanısın. Sana bir CV'den çıkarılan metni vereceğim ve bunu profesyonelce analiz edip detaylı geri bildirim sağlamanı istiyorum.
-            
-            Lütfen CV'yi analiz et ve aşağıdaki bölümleri sağla:
-            
-            1. Genel İzlenim: CV'nin güçlü ve zayıf yönlerinin kısa bir özeti.
-            2. ATS Puanı: CV'nin Başvuru Takip Sistemleri ile uyumluluğunu 0-100 ölçeğinde değerlendir.
-            3. Güçlü Yönler: CV'nin 3-5 olumlu yönünü listele.
-            4. İyileştirme Alanları: İyileştirilebilecek 3-5 yönü listele.
-            5. Öneriler: CV'yi geliştirmek için 3-5 spesifik, uygulanabilir öneri sun.
-            6. Anahtar Kelime Önerileri: Adayın dahil etmeyi düşünmesi gereken 5-10 ilgili anahtar kelime öner.
-            
-            Yanıtını şu anahtarlarla yapılandırılmış JSON formatında ver: overall_impression, ats_score (sayısal), strengths (dizi), areas_for_improvement (dizi), recommendations (dizi) ve keyword_suggestions (dizi).
-            
-            İşte CV metni:
-            
-            {cv_text}
-            """
-        
-        # Send text to Mistral AI for analysis
-        api_url = "https://api.mistral.ai/v1/chat/completions"
-        
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {MISTRAL_API_KEY}"
-        }
-        
-        payload = {
-            "model": "mistral-large-latest",  # Using Mistral's most capable model
-            "messages": [
-                {"role": "system", "content": "You are a professional CV analysis assistant that specializes in parsing and analyzing resumes. You provide structured, helpful feedback on how to improve CVs."},
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.3,  # Lower temperature for more consistent results
-            "response_format": {"type": "json_object"}  # Ensure JSON response format
-        }
-        
-        response = requests.post(api_url, headers=headers, json=payload)
-        
-        if response.status_code != 200:
-            print(f"Mistral API Error: {response.status_code}")
-            print(response.text)
-            return jsonify({'error': f'Error from Mistral API: {response.text}'}), 500
-        
-        # Parse the response
-        result = response.json()
-        
-        # Extract the content from the response
-        analysis_content = result['choices'][0]['message']['content']
-        
         # Parse the JSON content
-        try:
-            analysis_data = json.loads(analysis_content)
-            
-            # Return the structured analysis result
-            return jsonify({
-                'analysis': analysis_data
-            })
+        analysis_json = json.loads(analysis_content)
         
-        except json.JSONDecodeError:
-            # If the response is not valid JSON, return the raw text
-            print("Error parsing JSON from Mistral response")
-            print(analysis_content)
-            return jsonify({
-                'analysis': {
-                    'overall_impression': 'Error parsing AI response. Please try again.',
-                    'ats_score': 50,
-                    'strengths': [],
-                    'areas_for_improvement': [],
-                    'recommendations': [],
-                    'keyword_suggestions': []
-                }
-            })
-            
-    except Exception as e:
-        print("Error during AI analysis:", str(e))
-        traceback.print_exc()
-        return jsonify({'error': f'Error analyzing CV: {str(e)}'}), 500
+        # Return the analysis as a dictionary with proper keys
+        return {
+            "analysis": analysis_json
+        }
+    except json.JSONDecodeError:
+        # If JSON parsing fails, return the raw content
+        return {
+            "analysis": {
+                "overall_impression": "Error parsing structured response. Here is the raw analysis:",
+                "raw_response": analysis_content
+            }
+        }
 
-if __name__ == '__main__':
-    print("CV Analyzer API running on http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0')
+if __name__ == "__main__":
+    # Get port from environment variable or use default
+    port = int(os.environ.get("PORT", 5000))
+    
+    # Print a message to indicate the server is running
+    print(f"CV Analyzer API running on http://localhost:{port}")
+    
+    # Run the Flask app with debug mode
+    app.run(host='0.0.0.0', port=port, debug=True)
