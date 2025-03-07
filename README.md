@@ -1,10 +1,11 @@
 # CV Analyzer
 
-CV Analyzer is a web application that helps users improve their resumes/CVs for job applications. The application uses AI (Mistral AI) to analyze CVs and provide structured feedback on strengths, weaknesses, and areas for improvement.
+CV Analyzer is a web application that helps users improve their resumes/CVs for job applications. The application uses a two-stage AI approach with Mistral AI models to analyze CVs and provide structured feedback on strengths, weaknesses, and areas for improvement.
 
 ## Features
 
 - Upload and analyze PDF, DOCX, and TXT resumes
+- Advanced OCR processing for accurate text extraction
 - Receive AI-powered analysis with specific feedback
 - View ATS compatibility score
 - Get recommendations for improvement
@@ -12,23 +13,24 @@ CV Analyzer is a web application that helps users improve their resumes/CVs for 
 
 ## Current Project Status
 
-**Version**: 0.1.0  
+**Version**: 0.2.0  
 **Last Updated**: April 2023
 
 The application consists of:
 - A Next.js frontend with React & TypeScript
 - A Flask backend API server
-- Integration with Mistral AI for CV analysis
+- Two-stage Mistral AI integration for document processing and analysis
 - Transparent error handling between frontend and backend
 
 ### Recent Updates
 
-We've recently improved the application's error handling to provide a more honest user experience:
+We've recently improved the application with:
 
-- Removed mock data generation when backend API fails
-- Added clear error messages to inform users when services are unavailable
-- Implemented proper error state management in the frontend UI
-- Enhanced the user experience with transparent error feedback
+- **Two-Stage AI Processing**: First OCR extraction, then intelligent analysis
+- **Enhanced OCR Capabilities**: Better extraction of text from complex documents
+- **Advanced Analysis Model**: Using Mistral's most powerful model for insights
+- **DOCX Support**: Full support for Microsoft Word documents
+- **Improved Error Handling**: Clear user feedback for service availability
 
 ## Tech Stack
 
@@ -42,14 +44,33 @@ We've recently improved the application's error handling to provide a more hones
 ### Backend
 - **Server**: Flask 2.3.3
 - **Language**: Python 3.10+
-- **PDF Processing**: pdfplumber 0.10.3
+- **PDF Processing**: Mistral OCR + pdfplumber 0.10.3 (fallback)
 - **DOCX Processing**: python-docx 1.0.1
 - **Environment**: python-dotenv 1.0.0
 
 ### AI Integration
-- **AI Provider**: Mistral AI
+- **Document Processing**: mistral-ocr-latest model
+- **CV Analysis**: mistral-large-latest model
 - **API Access**: Via Mistral API key
 - **Analysis Format**: Structured JSON response
+
+## How It Works
+
+The CV Analyzer uses a sophisticated two-stage approach:
+
+1. **Document Processing Stage**:
+   - Uploads are processed by Mistral's OCR model (mistral-ocr-latest)
+   - Text is extracted while preserving document structure
+   - Complex layouts, tables, and formatting are handled accurately
+   - Fallback to traditional extraction methods if OCR fails
+
+2. **Analysis Stage**:
+   - Extracted text is analyzed by Mistral's large model (mistral-large-latest)
+   - AI provides detailed feedback on CV's strengths and weaknesses
+   - Results include ATS compatibility score and specific recommendations
+   - Response is structured in JSON format for frontend display
+
+This approach combines the best of document understanding technology with advanced language model analysis for superior results.
 
 ## Prerequisites
 
@@ -113,7 +134,7 @@ npm run dev
 1. Open http://localhost:3000 in your browser
 2. Select your preferred language (English or Turkish)
 3. Upload your CV (PDF, DOCX, or TXT format)
-4. Wait for the analysis to complete
+4. Wait for the two-stage analysis to complete
 5. View your results and recommendations
 
 ## Application Architecture
@@ -126,22 +147,22 @@ cv-analyzer/
 │   ├── api/
 │   │   └── upload/
 │   │       └── route.ts    # API endpoint for file upload
-│   │   └── results/
-│   │       └── page.tsx        # Results display page
-│   ├── components/
-│   │   ├── animated-text.tsx   # Text animation component
-│   │   ├── file-uploader.tsx   # File upload component
-│   │   ├── language-context.tsx # Language state management
-│   │   ├── language-selector.tsx # Language selector UI
-│   │   └── nav-links.tsx       # Navigation menu
-│   └── [various config files]
+│   └── results/
+│       └── page.tsx        # Results display page
+├── components/
+│   ├── animated-text.tsx   # Text animation component
+│   ├── file-uploader.tsx   # File upload component
+│   ├── language-context.tsx # Language state management
+│   ├── language-selector.tsx # Language selector UI
+│   └── nav-links.tsx       # Navigation menu
+└── [various config files]
 ```
 
 ### Backend Structure
 
 ```
 /
-├── backend.py              # Main Flask application
+├── backend.py              # Main Flask application with two-stage analysis
 ├── check_backend.py        # Utility to check backend status
 ├── run.py                  # Script to run both frontend & backend
 └── requirements.txt        # Python dependencies
@@ -152,8 +173,8 @@ cv-analyzer/
 1. User uploads a file through the frontend
 2. File is sent to Next.js API route `/api/upload`
 3. API forwards the file to Flask backend at `http://localhost:5000/analyze`
-4. Backend extracts text from the document
-5. Text is sent to Mistral AI for analysis
+4. Backend processes the file with Mistral OCR to extract text
+5. Extracted text is sent to Mistral Large model for analysis
 6. Analysis results are returned to the frontend
 7. Frontend displays formatted results to the user
 
@@ -164,6 +185,7 @@ The application implements comprehensive error handling:
 - **File Validation**: Validates file types and sizes before upload
 - **Backend Connection**: Detects and reports backend availability issues
 - **API Timeouts**: Handles long-running requests with appropriate timeouts
+- **OCR Fallbacks**: Uses alternative extraction methods if OCR fails
 - **User Feedback**: Provides clear error messages when services are unavailable
 
 ## Troubleshooting
@@ -185,7 +207,7 @@ This error occurs when the frontend cannot connect to the backend server. Here's
 
 3. **Check your API key**:
    - Ensure your `.env` file contains a valid Mistral API key
-   - Check that the API key has sufficient permissions and quota
+   - Check that the API key has sufficient permissions and quota for both models
 
 ### Other Issues
 
@@ -197,11 +219,7 @@ If you're experiencing other issues:
    cd cv-analyzer && npm install
    ```
 
-<<<<<<< HEAD
 2. Check browser console for specific JavaScript errors
-=======
-2. Check that your `.env` file contains a valid MISTRAL API key
->>>>>>> 4ef7d7436d7316d830c7df1e011044ba11d6264f
 
 3. Look at the Flask server logs for backend errors
 
