@@ -21,12 +21,14 @@ The application consists of:
 - A Next.js frontend with React & TypeScript
 - A Flask backend API server
 - Two-stage Mistral AI integration for document processing and analysis
+- Job description matching capabilities
 - Transparent error handling between frontend and backend
 
 ### Recent Updates
 
 We've recently improved the application with:
 
+- **Job Description Matching**: Added ability to analyze CVs against specific job postings
 - **Two-Stage AI Processing**: First OCR extraction, then intelligent analysis
 - **Enhanced OCR Capabilities**: Better extraction of text from complex documents
 - **Advanced Analysis Model**: Using Mistral's most powerful model for insights
@@ -57,7 +59,7 @@ We've recently improved the application with:
 
 ## How It Works
 
-The CV Analyzer uses a sophisticated two-stage approach:
+The CV Analyzer uses a sophisticated three-step approach:
 
 1. **Document Processing Stage**:
    - Uploads are processed by Mistral's OCR model (mistral-ocr-latest)
@@ -65,7 +67,13 @@ The CV Analyzer uses a sophisticated two-stage approach:
    - Complex layouts, tables, and formatting are handled accurately
    - Fallback to traditional extraction methods if OCR fails
 
-2. **Analysis Stage**:
+2. **Optional Job Matching**:
+   - Users can optionally provide a job description
+   - The system analyzes how well the CV matches the job requirements
+   - Generates a separate job match score
+   - Provides targeted recommendations specific to the job
+
+3. **Analysis Stage**:
    - Extracted text is analyzed by Mistral's large model (mistral-large-latest)
    - AI provides detailed feedback on CV's strengths and weaknesses
    - Results include ATS compatibility score and specific recommendations
@@ -134,9 +142,10 @@ npm run dev
 
 1. Open http://localhost:3000 in your browser
 2. Select your preferred language (English or Turkish)
-3. Upload your CV (PDF, DOCX, or TXT format)
-4. Wait for the two-stage analysis to complete
-5. View your results and recommendations
+3. Optionally paste a job description for targeted analysis
+4. Upload your CV (PDF, DOCX, or TXT format)
+5. Wait for the analysis to complete
+6. View your results, including job match information when applicable
 
 ## Application Architecture
 
@@ -152,7 +161,7 @@ cv-analyzer/
 │       └── page.tsx        # Results display page
 ├── components/
 │   ├── animated-text.tsx   # Text animation component
-│   ├── file-uploader.tsx   # File upload component
+│   ├── file-uploader.tsx   # File upload component with job description input
 │   ├── language-context.tsx # Language state management
 │   ├── language-selector.tsx # Language selector UI
 │   └── nav-links.tsx       # Navigation menu
@@ -171,13 +180,13 @@ cv-analyzer/
 
 ### Information Flow
 
-1. User uploads a file through the frontend
-2. File is sent to Next.js API route `/api/upload`
-3. API forwards the file to Flask backend at `http://localhost:5000/analyze`
+1. User uploads a file and optionally provides a job description
+2. Data is sent to Next.js API route `/api/upload`
+3. API forwards the file and job description to Flask backend at `/analyze`
 4. Backend processes the file with Mistral OCR to extract text
-5. Extracted text is sent to Mistral Large model for analysis
+5. Extracted text (and job description if provided) is sent to Mistral Large model
 6. Analysis results are returned to the frontend
-7. Frontend displays formatted results to the user
+7. Frontend displays formatted results, including job match if applicable
 
 ## Error Handling
 
