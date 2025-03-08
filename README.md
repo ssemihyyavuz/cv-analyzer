@@ -7,14 +7,15 @@ CV Analyzer is a web application that helps users improve their resumes/CVs for 
 - Upload and analyze PDF, DOCX, and TXT resumes
 - Advanced OCR processing for accurate text extraction
 - Receive AI-powered analysis with specific feedback
-- View ATS compatibility score
-- Get recommendations for improvement
+- Compare your CV against specific job descriptions
+- View ATS compatibility score and job match score
+- Get targeted recommendations for improvement
 - Support for both English and Turkish languages
 
 ## Current Project Status
 
-**Version**: 0.2.0  
-**Last Updated**: April 2023
+**Version**: 0.3.0  
+**Last Updated**: May 2023
 
 The application consists of:
 - A Next.js frontend with React & TypeScript
