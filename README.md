@@ -15,7 +15,7 @@ CV Analyzer is a web application that helps users improve their resumes/CVs for 
 ## Current Project Status
 
 **Version**: 0.3.0  
-**Last Updated**: May 2023
+**Last Updated**: May 2024
 
 The application consists of:
 - A Next.js frontend with React & TypeScript
