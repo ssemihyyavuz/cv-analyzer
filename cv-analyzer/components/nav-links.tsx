@@ -9,20 +9,41 @@ export function NavLinks() {
   return (
     <nav>
       <ul className="flex gap-6">
-        <li>
-          <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">
+        <li className="relative group">
+          <button 
+            disabled
+            className="text-gray-400 cursor-not-allowed"
+            aria-label={language === 'en' ? 'How it works' : 'Nasıl Çalışır'}
+          >
             {language === 'en' ? 'How it works' : 'Nasıl Çalışır'}
-          </Link>
+          </button>
+          <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 px-3 py-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-40 text-center z-10">
+            {language === 'en' ? '🚀 Coming soon!' : '🚀 Çok yakında!'}
+          </div>
         </li>
-        <li>
-          <Link href="/features" className="text-gray-600 hover:text-gray-900">
+        <li className="relative group">
+          <button 
+            disabled
+            className="text-gray-400 cursor-not-allowed"
+            aria-label={language === 'en' ? 'Features' : 'Özellikler'}
+          >
             {language === 'en' ? 'Features' : 'Özellikler'}
-          </Link>
+          </button>
+          <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 px-3 py-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-40 text-center z-10">
+            {language === 'en' ? '🔧 Under construction' : '🔧 Yapım aşamasında'}
+          </div>
         </li>
-        <li>
-          <Link href="/resources" className="text-gray-600 hover:text-gray-900">
+        <li className="relative group">
+          <button 
+            disabled
+            className="text-gray-400 cursor-not-allowed"
+            aria-label={language === 'en' ? 'Resources' : 'Kaynaklar'}
+          >
             {language === 'en' ? 'Resources' : 'Kaynaklar'}
-          </Link>
+          </button>
+          <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 px-3 py-2 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-40 text-center z-10">
+            {language === 'en' ? '📚 Content being prepared' : '📚 İçerik hazırlanıyor'}
+          </div>
         </li>
       </ul>
     </nav>

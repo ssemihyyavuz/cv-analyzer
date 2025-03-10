@@ -23,11 +23,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <LanguageProvider>
-          <div className="min-h-screen flex flex-col">
-            <header className="border-b border-gray-100 py-4">
-              <div className="container mx-auto px-4 flex justify-between items-center">
+          <div className="min-h-screen flex flex-col bg-gray-50">
+            <header className="border-b border-gray-200 py-5 bg-white shadow-md">
+              <div className="container mx-auto px-4 md:px-6 lg:px-8 flex justify-between items-center max-w-[84rem]">
                 <Link href="/" className="flex items-center gap-2">
-                  <div className="text-blue-500 w-6 h-6">
+                  <div className="text-blue-500 w-7 h-7">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -44,7 +44,7 @@ export default function RootLayout({
                       <line x1="10" y1="9" x2="8" y2="9" />
                     </svg>
                   </div>
-                  <span className="font-semibold text-lg">CV Analyzer</span>
+                  <span className="font-semibold text-xl">CV Analyzer</span>
                 </Link>
                 <div className="flex items-center gap-6">
                   <NavLinks />
@@ -55,8 +55,8 @@ export default function RootLayout({
             <main className="flex-1">
               {children}
             </main>
-            <footer className="border-t border-gray-100 py-4">
-              <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <footer className="border-t border-gray-100 py-4 bg-white">
+              <div className="container mx-auto px-4 md:px-6 lg:px-8 text-center text-gray-500 text-sm max-w-[72rem]">
                 © 2024 CV Analyzer. All rights reserved.
               </div>
             </footer>
