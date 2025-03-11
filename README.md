@@ -265,7 +265,3 @@ Contributions are welcome! Some areas for improvement:
 2. **User Accounts**: Add authentication and persistent storage
 3. **More File Formats**: Better support for various document types
 4. **Industry-Specific Analysis**: Tailored feedback for different fields
-
-## License
-
-MIT License
