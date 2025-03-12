@@ -47,74 +47,79 @@ We've recently improved the application with:
 ### Backend
 - **Server**: Flask 2.3.3
 - **Language**: Python 3.10+
-- **PDF Processing**:  
-  - Primary: Google Gemini 1.5 Flash/Pro  
-  - Secondary: PyPDF2 for text detection  
-  - Fallback: pdfplumber 0.10.3
-- **DOCX Processing**: docx2txt
+- **PDF Processing**: 
+  - Primary: Google Gemini 1.5 Flash/Pro
+  - Fallback: gemini-1.5-pro model
+- **DOCX Processing**: docx2txt 0.8
 - **Environment**: python-dotenv 1.0.0
 
 ### AI Integration
-- **Document Processing**:  
-  - Primary: gemini-1.5-flash model  
+- **Document Processing**: 
+  - Primary: gemini-1.5-flash model
   - Fallback: gemini-1.5-pro model
 - **CV Analysis**: mistral-large-latest model
-- **API Access**: Via Google Gemini and Mistral API keys
+- **API Libraries**:
+  - google-generativeai 0.8.4
+  - mistralai 1.5.1
 - **Analysis Format**: Structured JSON response
 
 ## How It Works
 
 The CV Analyzer uses a sophisticated three-step approach:
 
-1. **Document Processing Stage**:  
-   - Uploads are first checked for selectable text using PyPDF2  
-   - If no selectable text is found, Google's Gemini 1.5 Flash model processes the document  
-   - If Flash model encounters issues, system falls back to Gemini 1.5 Pro  
-   - Text is extracted while preserving document structure  
+1. **Document Processing Stage**:
+   - Documents are processed using Google's Gemini 1.5 Flash model
+   - If Flash model encounters issues, system falls back to Gemini 1.5 Pro
+   - Text is extracted while preserving document structure
    - Complex layouts, tables, and formatting are handled accurately
-2. **Optional Job Matching**:  
-   - Users can optionally provide a job description  
-   - The system analyzes how well the CV matches the job requirements  
-   - Generates a separate job match score  
+
+2. **Optional Job Matching**:
+   - Users can optionally provide a job description
+   - The system analyzes how well the CV matches the job requirements
+   - Generates a separate job match score
    - Provides targeted recommendations specific to the job
-3. **Analysis Stage**:  
-   - Extracted text is analyzed by Mistral's large model (mistral-large-latest)  
-   - AI provides detailed feedback on CV's strengths and weaknesses  
-   - Results include ATS compatibility score and specific recommendations  
+
+3. **Analysis Stage**:
+   - Extracted text (and job description if provided) is sent to Mistral's large model (mistral-large-latest)
+   - AI provides detailed feedback on CV's strengths and weaknesses
+   - Results include ATS compatibility score and specific recommendations
    - Response is structured in JSON format for frontend display
 
 This hybrid approach combines the strengths of multiple AI models for superior results.
 
 ## Prerequisites
 
-* Python 3.8 or higher
-* Node.js 18 or higher
-* npm or yarn
-* Mistral AI API key
-* Google Gemini API key
+- Python 3.10 or higher
+- Node.js 18 or higher
+- npm or yarn
+- Mistral AI API key
+- Google Gemini API key
 
 ## Installation
 
-1. Clone the repository:  
-```  
-git clone <repository-url>  
-cd cv-analyzer  
-```
-2. Set up the frontend:  
-```  
-cd cv-analyzer  
-npm install  
-cd ..  
-```
-3. Set up the Python backend:  
-```  
-pip install -r requirements.txt  
-```
-4. Create a `.env` file in the root directory with your API keys:  
-```  
-MISTRAL_API_KEY=your_mistral_api_key_here  
-GEMINI_API_KEY=your_gemini_api_key_here  
-```
+1. Clone the repository:
+   ```
+   git clone <repository-url>
+   cd cv-analyzer
+   ```
+
+2. Set up the frontend:
+   ```
+   cd cv-analyzer
+   npm install
+   cd ..
+   ```
+
+3. Set up the Python backend:
+   ```
+   pip install -r requirements.txt
+   ```
+
+4. Create a `.env` file in the root directory with your API keys:
+   ```
+   MISTRAL_API_KEY=your_mistral_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
 
 ## Running the Application
 
@@ -122,34 +127,28 @@ You can run both the frontend and backend with a single command:
 
 ```
 python run.py
-
 ```
 
 This will start:
-
-* Flask backend server on <http://localhost:5000>
-* Next.js frontend on <http://localhost:3000>
+- Flask backend server on http://localhost:5000
+- Next.js frontend on http://localhost:3000
 
 Alternatively, you can run each separately:
 
 **Backend:**
-
 ```
 python backend.py
-
 ```
 
 **Frontend:**
-
 ```
 cd cv-analyzer
 npm run dev
-
 ```
 
 ## Usage
 
-1. Open <http://localhost:3000> in your browser
+1. Open http://localhost:3000 in your browser
 2. Select your preferred language (English or Turkish)
 3. Optionally paste a job description for targeted analysis
 4. Upload your CV (PDF, DOCX, or TXT format)
@@ -175,7 +174,6 @@ cv-analyzer/
 │   ├── language-selector.tsx # Language selector UI
 │   └── nav-links.tsx       # Navigation menu
 └── [various config files]
-
 ```
 
 ### Backend Structure
@@ -186,7 +184,6 @@ cv-analyzer/
 ├── check_backend.py        # Utility to check backend status
 ├── run.py                  # Script to run both frontend & backend
 └── requirements.txt        # Python dependencies
-
 ```
 
 ### Information Flow
@@ -194,9 +191,7 @@ cv-analyzer/
 1. User uploads a file and optionally provides a job description
 2. Data is sent to Next.js API route `/api/upload`
 3. API forwards the file and job description to Flask backend at `/analyze`
-4. Backend processes the file:
-   * Checks for selectable text with PyPDF2
-   * If needed, uses Gemini 1.5 Flash/Pro for OCR
+4. Backend processes the file using Gemini 1.5 Flash/Pro for OCR
 5. Extracted text (and job description if provided) is sent to Mistral Large model
 6. Analysis results are returned to the frontend
 7. Frontend displays formatted results, including job match if applicable
@@ -205,12 +200,12 @@ cv-analyzer/
 
 The application implements comprehensive error handling:
 
-* **File Validation**: Validates file types and sizes before upload
-* **Backend Connection**: Detects and reports backend availability issues
-* **API Timeouts**: Handles long-running requests with appropriate timeouts
-* **Multi-Model Approach**: Falls back to alternative models if primary ones fail
-* **Text Detection**: Smart detection of PDF text before using OCR
-* **User Feedback**: Provides clear error messages when services are unavailable
+- **File Validation**: Validates file types and sizes before upload
+- **Backend Connection**: Detects and reports backend availability issues
+- **API Timeouts**: Handles long-running requests with appropriate timeouts
+- **Multi-Model Approach**: Falls back to alternative models if primary ones fail
+- **Text Detection**: Smart detection of PDF text before using OCR
+- **User Feedback**: Provides clear error messages when services are unavailable
 
 ## Troubleshooting
 
@@ -218,42 +213,47 @@ The application implements comprehensive error handling:
 
 This error occurs when the frontend cannot connect to the backend server. Here's how to fix it:
 
-1. **Check if the backend is running**:  
-```  
-python check_backend.py  
-```  
-This script will check if the backend is accessible and guide you through the steps to fix it.
-2. **Make sure both servers are running**:  
-   * The backend should be running on <http://localhost:5000>  
-   * The frontend should be running on <http://localhost:3000>  
-   * Use `python run.py` to start both servers simultaneously
-3. **Check your API key**:  
-   * Ensure your `.env` file contains a valid Mistral API key  
-   * Check that the API key has sufficient permissions and quota for both models
+1. **Check if the backend is running**: 
+   ```
+   python check_backend.py
+   ```
+   This script will check if the backend is accessible and guide you through the steps to fix it.
+
+2. **Make sure both servers are running**:
+   - The backend should be running on http://localhost:5000
+   - The frontend should be running on http://localhost:3000
+   - Use `python run.py` to start both servers simultaneously
+
+3. **Check your API key**:
+   - Ensure your `.env` file contains valid API keys for both Mistral and Gemini
+   - Check that the API keys have sufficient permissions and quota
 
 ### Other Issues
 
 If you're experiencing other issues:
 
-1. Make sure all dependencies are installed correctly:  
-```  
-pip install -r requirements.txt  
-cd cv-analyzer && npm install  
-```
+1. Make sure all dependencies are installed correctly:
+   ```
+   pip install -r requirements.txt
+   cd cv-analyzer && npm install
+   ```
+
 2. Check browser console for specific JavaScript errors
+
 3. Look at the Flask server logs for backend errors
+
 4. Try restarting both the frontend and backend servers
 
 ## API Endpoints
 
 ### Backend (Flask) Endpoints
 
-* `GET /` \- Health check endpoint
-* `POST /analyze` \- Upload and analyze CV file
+- `GET /` - Health check endpoint
+- `POST /analyze` - Upload and analyze CV file
 
 ### Frontend (Next.js) API Routes
 
-* `POST /api/upload` \- Proxy endpoint that forwards to backend
+- `POST /api/upload` - Proxy endpoint that forwards to backend
 
 ## Contributing
 
@@ -263,3 +263,21 @@ Contributions are welcome! Some areas for improvement:
 2. **User Accounts**: Add authentication and persistent storage
 3. **More File Formats**: Better support for various document types
 4. **Industry-Specific Analysis**: Tailored feedback for different fields
+
+## License
+
+MIT License
+## Demo
+
+### Video Demonstration
+
+![CV Analyzer Demo](cv-analyzer-video-compressed.mp4)
+
+*Click above to download and view the demonstration video*
+
+This video demonstration showcases:
+- The complete workflow from uploading a CV to receiving analysis
+- OCR processing capabilities with Google Gemini and Mistral
+- Job matching functionality
+- Analysis results and recommendations
+
