@@ -2,6 +2,10 @@
 
 CV Analyzer is a web application that helps users improve their resumes/CVs for job applications. The application uses a hybrid AI approach with Google Gemini for OCR and Mistral AI for analysis to provide structured feedback on strengths, weaknesses, and areas for improvement.
 
+# Product Video
+
+https://github.com/user-attachments/assets/facd97a8-222a-495d-afea-7a136bb02aef
+
 ## Features
 
 - Upload and analyze PDF, DOCX, and TXT resumes
