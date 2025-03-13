@@ -268,20 +268,3 @@ Contributions are welcome! Some areas for improvement:
 3. **More File Formats**: Better support for various document types
 4. **Industry-Specific Analysis**: Tailored feedback for different fields
 
-## License
-
-MIT License
-## Demo
-
-### Video Demonstration
-
-![CV Analyzer Demo](cv-analyzer-video-compressed.mp4)
-
-*Click above to download and view the demonstration video*
-
-This video demonstration showcases:
-- The complete workflow from uploading a CV to receiving analysis
-- OCR processing capabilities with Google Gemini and Mistral
-- Job matching functionality
-- Analysis results and recommendations
-
